@@ -9,6 +9,8 @@ import { AvatarPicker } from "./AvatarPicker";
 import { ColorPicker } from "./ColorPicker";
 import { AVATARS, MEMBER_COLORS } from "@/lib/constants";
 import { Member } from "@/lib/types";
+import { UserPlus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddMemberFormProps {
   onAdd: (member: Omit<Member, "id" | "points" | "createdAt">) => void;
@@ -32,7 +34,6 @@ export function AddMemberForm({ onAdd, onCancel }: AddMemberFormProps) {
       role,
     });
 
-    // Reset form
     setName("");
     setAvatar(AVATARS[0]);
     setColor(MEMBER_COLORS[0].name);
@@ -40,68 +41,82 @@ export function AddMemberForm({ onAdd, onCancel }: AddMemberFormProps) {
   };
 
   return (
-    <Card className="border-2 border-dashed">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Add Family Member</CardTitle>
+    <Card className="border-2 border-emerald-200 bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl overflow-hidden">
+      <CardHeader className="pb-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100">
+        <CardTitle className="text-lg flex items-center gap-2 text-emerald-700">
+          <UserPlus className="w-5 h-5" />
+          Add Family Member
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="pt-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className="font-semibold">Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter name..."
-              className="text-lg"
+              className="text-lg h-12 rounded-xl border-2 focus:border-emerald-400"
               autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Pick an avatar</Label>
+            <Label className="font-semibold">Pick an avatar</Label>
             <AvatarPicker selected={avatar} onSelect={setAvatar} />
           </div>
 
           <div className="space-y-2">
-            <Label>Pick a color</Label>
+            <Label className="font-semibold">Pick a color</Label>
             <ColorPicker selected={color} onSelect={setColor} />
           </div>
 
           <div className="space-y-2">
-            <Label>Role</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="parent"
-                  checked={role === "parent"}
-                  onChange={() => setRole("parent")}
-                  className="w-4 h-4"
-                />
-                <span>Parent</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="child"
-                  checked={role === "child"}
-                  onChange={() => setRole("child")}
-                  className="w-4 h-4"
-                />
-                <span>Child</span>
-              </label>
+            <Label className="font-semibold">Role</Label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRole("parent")}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl font-medium transition-all border-2",
+                  role === "parent"
+                    ? "bg-amber-100 border-amber-300 text-amber-700"
+                    : "bg-stone-50 border-stone-200 text-stone-500 hover:border-stone-300"
+                )}
+              >
+                Parent
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("child")}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl font-medium transition-all border-2",
+                  role === "child"
+                    ? "bg-sky-100 border-sky-300 text-sky-700"
+                    : "bg-stone-50 border-stone-200 text-stone-500 hover:border-stone-300"
+                )}
+              >
+                Child
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
-            <Button type="submit" className="flex-1" disabled={!name.trim()}>
+          <div className="flex gap-3 pt-2">
+            <Button 
+              type="submit" 
+              className="flex-1 h-12 rounded-xl font-semibold bg-emerald-500 hover:bg-emerald-600 shadow-md" 
+              disabled={!name.trim()}
+            >
               Add Member
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                className="h-12 rounded-xl font-medium border-2"
+              >
                 Cancel
               </Button>
             )}
