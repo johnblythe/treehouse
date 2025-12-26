@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useFamily } from "@/hooks/useFamily";
 import { useActivities } from "@/hooks/useActivities";
 import { MemberList } from "@/components/family";
 import { ActivityFeed, PointsToast, usePointsToast } from "@/components/points";
+import { Leaderboard, LeaderboardReveal } from "@/components/leaderboard";
 import { seedFamily, clearFamily, seedActivities, clearActivities } from "@/lib/seed-data";
-import { TreePine } from "lucide-react";
+import { TreePine, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -13,6 +16,7 @@ export default function Home() {
   const { members, isHydrated, addMember, updateMember, removeMember, awardPoints, getMember } = useFamily();
   const { activities, addActivity, isHydrated: activitiesHydrated } = useActivities();
   const { toasts, showToast, dismissToast } = usePointsToast();
+  const [showReveal, setShowReveal] = useState(false);
 
   const handlePointsAwarded = (memberId: string, points: number, activityName: string) => {
     awardPoints(memberId, points);
@@ -49,6 +53,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Leaderboard Reveal Modal */}
+      {showReveal && members.length >= 2 && (
+        <LeaderboardReveal 
+          members={members} 
+          onClose={() => setShowReveal(false)} 
+        />
+      )}
+
       {/* Toast notifications */}
       {toasts.map((toast) => (
         <PointsToast
@@ -61,13 +73,27 @@ export default function Home() {
       {/* Header */}
       <header className="border-b-2 border-emerald-100 bg-white/70 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-md">
-              <TreePine className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-md">
+                <TreePine className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-stone-800">
+                Treehouse
+              </h1>
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-stone-800">
-              Treehouse
-            </h1>
+            
+            {/* Reveal Rankings button in header */}
+            {members.length >= 2 && members.some(m => m.points > 0) && (
+              <Button
+                onClick={() => setShowReveal(true)}
+                variant="outline"
+                className="rounded-xl font-semibold border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700"
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                Reveal Rankings
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -84,15 +110,22 @@ export default function Home() {
               onRemove={removeMember}
             />
 
-            {/* Mobile: collapsible activity feed */}
-            {members.length > 0 && activities.length > 0 && (
-              <div className="lg:hidden">
-                <ActivityFeed
-                  activities={activities}
-                  members={members}
-                  variant="inline"
-                  defaultExpanded={false}
-                />
+            {/* Mobile: collapsible leaderboard + activity feed */}
+            {members.length > 0 && (
+              <div className="lg:hidden space-y-4">
+                {members.some(m => m.points > 0) && (
+                  <div className="bg-white/60 backdrop-blur-sm border-2 border-stone-200 rounded-2xl p-4">
+                    <Leaderboard members={members} compact />
+                  </div>
+                )}
+                {activities.length > 0 && (
+                  <ActivityFeed
+                    activities={activities}
+                    members={members}
+                    variant="inline"
+                    defaultExpanded={false}
+                  />
+                )}
               </div>
             )}
 
@@ -148,10 +181,18 @@ export default function Home() {
             )}
           </main>
 
-          {/* Desktop: sidebar activity feed */}
+          {/* Desktop: sidebar with leaderboard + activity feed */}
           {members.length > 0 && (
-            <aside className="hidden lg:block w-80 shrink-0">
-              <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 max-h-[calc(100vh-8rem)] overflow-hidden shadow-sm">
+            <aside className="hidden lg:block w-80 shrink-0 space-y-4">
+              {/* Leaderboard */}
+              {members.some(m => m.points > 0) && (
+                <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 shadow-sm">
+                  <Leaderboard members={members} />
+                </div>
+              )}
+              
+              {/* Activity Feed */}
+              <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 max-h-[calc(100vh-20rem)] overflow-hidden shadow-sm" style={{ top: members.some(m => m.points > 0) ? 'auto' : '6rem' }}>
                 <ActivityFeed
                   activities={activities}
                   members={members}
