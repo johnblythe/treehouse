@@ -6,6 +6,8 @@ import { useActivities } from "@/hooks/useActivities";
 import { MemberList } from "@/components/family";
 import { ActivityFeed, PointsToast, usePointsToast } from "@/components/points";
 import { Leaderboard, LeaderboardReveal } from "@/components/leaderboard";
+import { ChoreRoulette } from "@/components/micro-apps/chore-roulette";
+import { DinnerPicker } from "@/components/micro-apps/dinner-picker";
 import { seedFamily, clearFamily, seedActivities, clearActivities } from "@/lib/seed-data";
 import { TreePine, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,8 @@ export default function Home() {
   const { activities, addActivity, isHydrated: activitiesHydrated } = useActivities();
   const { toasts, showToast, dismissToast } = usePointsToast();
   const [showReveal, setShowReveal] = useState(false);
+  const [showChoreRoulette, setShowChoreRoulette] = useState(false);
+  const [showDinnerPicker, setShowDinnerPicker] = useState(false);
 
   const handlePointsAwarded = (memberId: string, points: number, activityName: string) => {
     awardPoints(memberId, points);
@@ -59,6 +63,20 @@ export default function Home() {
           members={members} 
           onClose={() => setShowReveal(false)} 
         />
+      )}
+
+      {/* Chore Roulette Modal */}
+      {showChoreRoulette && (
+        <ChoreRoulette
+          members={members}
+          onPointsAwarded={handlePointsAwarded}
+          onClose={() => setShowChoreRoulette(false)}
+        />
+      )}
+
+      {/* Dinner Picker Modal */}
+      {showDinnerPicker && (
+        <DinnerPicker onClose={() => setShowDinnerPicker(false)} />
       )}
 
       {/* Toast notifications */}
@@ -135,20 +153,20 @@ export default function Home() {
                 <h2 className="text-xl font-bold mb-4 text-stone-800">Micro-Apps</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <button
-                    disabled
-                    className="micro-app-card p-6 rounded-2xl bg-white/80 backdrop-blur-sm text-center shadow-sm opacity-60 cursor-not-allowed"
+                    onClick={() => setShowChoreRoulette(true)}
+                    className="micro-app-card p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-200 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
                   >
                     <span className="text-4xl block mb-3">🎰</span>
-                    <span className="font-bold text-stone-700">Chore Spinner</span>
-                    <span className="block text-xs text-muted-foreground mt-1">Coming soon</span>
+                    <span className="font-bold text-amber-700">Chore Roulette</span>
+                    <span className="block text-xs text-amber-600 mt-1">Get lucky!</span>
                   </button>
                   <button
-                    disabled
-                    className="micro-app-card p-6 rounded-2xl bg-white/80 backdrop-blur-sm text-center shadow-sm opacity-60 cursor-not-allowed"
+                    onClick={() => setShowDinnerPicker(true)}
+                    className="micro-app-card p-6 rounded-2xl bg-gradient-to-br from-rose-50 to-pink-100 border-2 border-rose-200 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
                   >
                     <span className="text-4xl block mb-3">🍽️</span>
-                    <span className="font-bold text-stone-700">Dinner Picker</span>
-                    <span className="block text-xs text-muted-foreground mt-1">Coming soon</span>
+                    <span className="font-bold text-rose-700">Dinner Picker</span>
+                    <span className="block text-xs text-rose-600 mt-1">Spin to decide!</span>
                   </button>
                   <button
                     disabled

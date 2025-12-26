@@ -78,6 +78,58 @@
       "url": "https://github.com/johnblythe/treehouse/issues/6",
       "createdAt": "2024-12-26T20:00:00.000Z",
       "updatedAt": "2024-12-26T20:00:00.000Z"
+    },
+    {
+      "id": "7",
+      "number": 7,
+      "title": "component: Mystery Box - reveal-style random picker",
+      "labels": ["enhancement", "component"],
+      "status": "open",
+      "priority": "med",
+      "needsSync": true,
+      "localOnly": true,
+      "description": "Reusable mystery box reveal component. 3 boxes shuffle, pick one, dramatic reveal.",
+      "createdAt": "2024-12-27T00:00:00.000Z",
+      "updatedAt": "2024-12-27T00:00:00.000Z"
+    },
+    {
+      "id": "8",
+      "number": 8,
+      "title": "component: Swipe Picker - Tinder-style voting",
+      "labels": ["enhancement", "component"],
+      "status": "open",
+      "priority": "med",
+      "needsSync": true,
+      "localOnly": true,
+      "description": "Swipe left/right on options. Need N family members to say YES to pick winner.",
+      "createdAt": "2024-12-27T00:00:00.000Z",
+      "updatedAt": "2024-12-27T00:00:00.000Z"
+    },
+    {
+      "id": "9",
+      "number": 9,
+      "title": "component: Bracket Battle - tournament voting",
+      "labels": ["enhancement", "component"],
+      "status": "open",
+      "priority": "med",
+      "needsSync": true,
+      "localOnly": true,
+      "description": "4-8 options in bracket. Family votes each round. Great for movie night, dinner, activities.",
+      "createdAt": "2024-12-27T00:00:00.000Z",
+      "updatedAt": "2024-12-27T00:00:00.000Z"
+    },
+    {
+      "id": "10",
+      "number": 10,
+      "title": "component: Price Is Right Wheel - big spin wheel",
+      "labels": ["enhancement", "component"],
+      "status": "open",
+      "priority": "med",
+      "needsSync": true,
+      "localOnly": true,
+      "description": "CSS-animated vertical wheel like Price Is Right. Dramatic spin with tick sounds.",
+      "createdAt": "2024-12-27T00:00:00.000Z",
+      "updatedAt": "2024-12-27T00:00:00.000Z"
     }
   ]
 }
