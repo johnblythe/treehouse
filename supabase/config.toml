@@ -1,24 +1,26 @@
 # Treehouse Supabase Local Config
 # Using non-default ports to avoid conflicts
 
+project_id = "treehouse"
+
 [api]
 enabled = true
-port = 54321
+port = 54341
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54333
+port = 54342
 major_version = 15
 
 [studio]
 enabled = true
-port = 54323
+port = 54343
 
 [inbucket]
 enabled = true
-port = 54324
+port = 54344
 
 [storage]
 enabled = true
@@ -31,3 +33,6 @@ additional_redirect_urls = ["http://127.0.0.1:3002"]
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+
+[analytics]
+enabled = false
