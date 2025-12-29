@@ -15,23 +15,23 @@ port = 54342
 major_version = 15
 
 [studio]
-enabled = true
+enabled = false
 port = 54343
 
 [inbucket]
-enabled = true
+enabled = false
 port = 54344
 
 [storage]
-enabled = true
+enabled = false
 
 [auth]
-enabled = true
+enabled = false
 site_url = "http://127.0.0.1:3002"
 additional_redirect_urls = ["http://127.0.0.1:3002"]
 
 [auth.email]
-enable_signup = true
+enable_signup = false
 enable_confirmations = false
 
 [analytics]
