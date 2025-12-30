@@ -9,6 +9,7 @@ import { Leaderboard, LeaderboardReveal } from "@/components/leaderboard";
 import { ChoreRoulette } from "@/components/micro-apps/chore-roulette";
 import { DinnerPicker } from "@/components/micro-apps/dinner-picker";
 import { DailyCheckIn } from "@/components/micro-apps/check-in";
+import { SelfReportLog } from "@/components/micro-apps/self-report";
 import { seedFamily, clearFamily, seedActivities, clearActivities } from "@/lib/seed-data";
 import { TreePine, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default function Home() {
   const [showChoreRoulette, setShowChoreRoulette] = useState(false);
   const [showDinnerPicker, setShowDinnerPicker] = useState(false);
   const [showDailyCheckIn, setShowDailyCheckIn] = useState(false);
+  const [showSelfReport, setShowSelfReport] = useState(false);
 
   const handlePointsAwarded = (memberId: string, points: number, activityName: string) => {
     awardPoints(memberId, points);
@@ -87,6 +89,15 @@ export default function Home() {
           members={members}
           onComplete={() => {}}
           onClose={() => setShowDailyCheckIn(false)}
+        />
+      )}
+
+      {/* Self-Report Log Modal */}
+      {showSelfReport && (
+        <SelfReportLog
+          members={members}
+          onComplete={() => {}}
+          onClose={() => setShowSelfReport(false)}
         />
       )}
 
@@ -186,6 +197,14 @@ export default function Home() {
                     <span className="text-4xl block mb-3">🧠</span>
                     <span className="font-bold text-purple-700">Daily Check-in</span>
                     <span className="block text-xs text-purple-600 mt-1">+10 Wisdom XP</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSelfReport(true)}
+                    className="micro-app-card p-6 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-200 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                  >
+                    <span className="text-4xl block mb-3">✨</span>
+                    <span className="font-bold text-amber-700">Log a Win</span>
+                    <span className="block text-xs text-amber-600 mt-1">+15-25 XP</span>
                   </button>
                   <button
                     disabled

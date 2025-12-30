@@ -179,12 +179,9 @@ export function useStats(memberId: string | null) {
         throw new Error(`Unknown preset: ${presetId}`);
       }
 
-      // Handle presets with multiple stats (like 'told_truth')
-      const statToLog = "stats" in preset ? preset.stats[0] : preset.stat;
-
       return logActivity({
         activityType: "self_report",
-        statAffected: statToLog,
+        statAffected: preset.stat,
         description: description || preset.label,
         wasHard,
         metadata: { preset: presetId },
