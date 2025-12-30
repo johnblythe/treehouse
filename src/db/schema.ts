@@ -61,3 +61,53 @@ export const votes = treehouseSchema.table("votes", {
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// ============================================
+// CHARACTER DEVELOPMENT SYSTEM (Soul Pivot)
+// ============================================
+
+// Stats per member - the 5 character dimensions
+// 💪 grit, 🧠 wisdom, ❤️ heart, ⚡ initiative, ⚖️ temperance
+export const stats = treehouseSchema.table("stats", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }).notNull(),
+  statType: text("stat_type").notNull(), // 'grit' | 'wisdom' | 'heart' | 'initiative' | 'temperance'
+  currentXp: integer("current_xp").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Activity log - all XP-earning events
+export const activityLog = treehouseSchema.table("activity_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }).notNull(),
+  activityType: text("activity_type").notNull(), // 'self_report' | 'check_in' | 'micro_app' | 'bounce_back'
+  statAffected: text("stat_affected").notNull(), // which stat got XP
+  xpGained: integer("xp_gained").notNull(),
+  description: text("description"), // optional description of what was done
+  metadata: jsonb("metadata"), // extra data (preset used, micro_app type, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Streaks - forgiving streak tracking with bounce-back
+export const streaks = treehouseSchema.table("streaks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }).notNull().unique(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  bestStreak: integer("best_streak").notNull().default(0),
+  comebackCount: integer("comeback_count").notNull().default(0),
+  lastActiveDate: timestamp("last_active_date"),
+  restDaysUsedThisWeek: integer("rest_days_used_this_week").notNull().default(0),
+  weekStartDate: timestamp("week_start_date"), // to reset rest days weekly
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Daily check-ins - builds Wisdom stat
+export const checkIns = treehouseSchema.table("check_ins", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  memberId: uuid("member_id").references(() => members.id, { onDelete: "cascade" }).notNull(),
+  mood: integer("mood").notNull(), // 1-5 (😫 to 🤩)
+  proudOf: text("proud_of"), // "One thing I'm proud of today"
+  isPrivate: boolean("is_private").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
