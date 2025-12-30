@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stats, streaks, members } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { stats, streaks, members, activityLog } from "@/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { STAT_TYPES, getLevelFromXp, getOverallLevel, StatType, STAT_INFO } from "@/lib/stats";
 
 // GET stats for a member
@@ -63,6 +63,20 @@ export async function GET(
         .returning();
     }
 
+    // Get today's check-in (latest one for today)
+    const [todayCheckIn] = await db
+      .select()
+      .from(activityLog)
+      .where(
+        and(
+          eq(activityLog.memberId, memberId),
+          eq(activityLog.activityType, "check_in"),
+          sql`DATE(${activityLog.createdAt}) = CURRENT_DATE`
+        )
+      )
+      .orderBy(desc(activityLog.createdAt))
+      .limit(1);
+
     // Format response
     const statsMap: Record<StatType, {
       statType: StatType;
@@ -96,6 +110,15 @@ export async function GET(
         comebacks: memberStreak.comebackCount,
         lastActiveDate: memberStreak.lastActiveDate,
       },
+      todayCheckIn: todayCheckIn
+        ? {
+            id: todayCheckIn.id,
+            mood: (todayCheckIn.metadata as { mood?: number })?.mood,
+            description: todayCheckIn.description,
+            xpGained: todayCheckIn.xpGained,
+            createdAt: todayCheckIn.createdAt,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Failed to fetch stats:", error);
