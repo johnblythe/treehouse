@@ -81,10 +81,12 @@ export const SELF_REPORT_PRESETS = [
   { id: 'helped_someone', label: 'I helped someone', stat: 'heart' as StatType },
   { id: 'without_asking', label: 'I did something without being asked', stat: 'initiative' as StatType },
   { id: 'saved_money', label: 'I saved money / didn\'t buy something', stat: 'temperance' as StatType },
-  { id: 'told_truth', label: 'I told the truth about something hard', stats: ['grit', 'wisdom'] as StatType[] },
+  { id: 'told_truth', label: 'I told the truth about something hard', stat: 'grit' as StatType },
   { id: 'stayed_calm', label: 'I stayed calm when upset', stat: 'temperance' as StatType },
   { id: 'finished_hard', label: 'I finished something I didn\'t want to', stat: 'grit' as StatType },
 ] as const;
+
+export type SelfReportPreset = typeof SELF_REPORT_PRESETS[number];
 
 // ============================================
 // LEVEL CALCULATION
