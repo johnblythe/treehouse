@@ -30,6 +30,14 @@ export interface StreakData {
   lastActiveDate: string | null;
 }
 
+export interface TodayCheckIn {
+  id: string;
+  mood: number;
+  description: string | null;
+  xpGained: number;
+  createdAt: string;
+}
+
 export interface MemberStats {
   memberId: string;
   memberName: string;
@@ -37,6 +45,7 @@ export interface MemberStats {
   overallLevel: number;
   totalXp: number;
   streak: StreakData;
+  todayCheckIn: TodayCheckIn | null;
 }
 
 export interface ActivityLogEntry {

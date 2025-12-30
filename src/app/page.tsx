@@ -8,6 +8,7 @@ import { ActivityFeed, PointsToast, usePointsToast } from "@/components/points";
 import { Leaderboard, LeaderboardReveal } from "@/components/leaderboard";
 import { ChoreRoulette } from "@/components/micro-apps/chore-roulette";
 import { DinnerPicker } from "@/components/micro-apps/dinner-picker";
+import { DailyCheckIn } from "@/components/micro-apps/check-in";
 import { seedFamily, clearFamily, seedActivities, clearActivities } from "@/lib/seed-data";
 import { TreePine, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export default function Home() {
   const [showReveal, setShowReveal] = useState(false);
   const [showChoreRoulette, setShowChoreRoulette] = useState(false);
   const [showDinnerPicker, setShowDinnerPicker] = useState(false);
+  const [showDailyCheckIn, setShowDailyCheckIn] = useState(false);
 
   const handlePointsAwarded = (memberId: string, points: number, activityName: string) => {
     awardPoints(memberId, points);
@@ -77,6 +79,15 @@ export default function Home() {
       {/* Dinner Picker Modal */}
       {showDinnerPicker && (
         <DinnerPicker onClose={() => setShowDinnerPicker(false)} />
+      )}
+
+      {/* Daily Check-in Modal */}
+      {showDailyCheckIn && (
+        <DailyCheckIn
+          members={members}
+          onComplete={() => {}}
+          onClose={() => setShowDailyCheckIn(false)}
+        />
       )}
 
       {/* Toast notifications */}
@@ -167,6 +178,14 @@ export default function Home() {
                     <span className="text-4xl block mb-3">🍽️</span>
                     <span className="font-bold text-rose-700">Dinner Picker</span>
                     <span className="block text-xs text-rose-600 mt-1">Spin to decide!</span>
+                  </button>
+                  <button
+                    onClick={() => setShowDailyCheckIn(true)}
+                    className="micro-app-card p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-violet-100 border-2 border-purple-200 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                  >
+                    <span className="text-4xl block mb-3">🧠</span>
+                    <span className="font-bold text-purple-700">Daily Check-in</span>
+                    <span className="block text-xs text-purple-600 mt-1">+10 Wisdom XP</span>
                   </button>
                   <button
                     disabled
