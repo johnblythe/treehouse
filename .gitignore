@@ -48,3 +48,4 @@ supabase/.temp/
 # claude local settings
 .claude/settings.local.json
 .issues.json
+plans/
