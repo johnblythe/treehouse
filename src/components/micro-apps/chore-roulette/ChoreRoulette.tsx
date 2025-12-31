@@ -10,6 +10,7 @@ import { getRandomDecoys } from "./decoys";
 import { Button } from "@/components/ui/button";
 import { Settings, X, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStats } from "@/hooks/useStats";
 
 type Phase = "setup" | "select-member" | "roulette" | "result";
 
@@ -31,6 +32,9 @@ export function ChoreRoulette({ members, onPointsAwarded, onClose }: ChoreRoulet
   const [realChores, setRealChores] = useState<ChoreInput[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [slots, setSlots] = useState<RouletteSlot[]>([]);
+
+  // XP system integration
+  const { logMicroApp } = useStats(selectedMemberId);
 
   const selectedMember = useMemo(
     () => members.find(m => m.id === selectedMemberId),
@@ -92,12 +96,23 @@ export function ChoreRoulette({ members, onPointsAwarded, onClose }: ChoreRoulet
     setPhase("result");
   }, []);
 
-  const handleAcceptChores = () => {
+  const handleAcceptChores = async () => {
     if (selectedMember) {
-      // Award points for each real chore
+      // Award points for each real chore (legacy system)
       realChores.forEach(chore => {
         onPointsAwarded(selectedMember.id, chore.points, chore.name);
       });
+
+      // Log to XP system → +20 Grit
+      try {
+        await logMicroApp(
+          "chore_spinner",
+          "grit",
+          `Completed ${realChores.length} chore${realChores.length > 1 ? "s" : ""}`
+        );
+      } catch (err) {
+        console.error("Failed to log XP:", err);
+      }
     }
     onClose();
   };

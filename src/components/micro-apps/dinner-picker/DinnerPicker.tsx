@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Meal } from "./types";
 import { MealSetup } from "./MealSetup";
 import { PIRWheel } from "./PIRWheel";
@@ -8,18 +8,32 @@ import { useDinnerPicker } from "./useDinnerPicker";
 import { Button } from "@/components/ui/button";
 import { Settings, X, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStats } from "@/hooks/useStats";
+import type { Member } from "@/lib/types";
 
 type Phase = "setup" | "spin" | "result";
 
 interface DinnerPickerProps {
+  members?: Member[];
   onClose: () => void;
 }
 
-export function DinnerPicker({ onClose }: DinnerPickerProps) {
+export function DinnerPicker({ members = [], onClose }: DinnerPickerProps) {
   const { config, isHydrated, isConfigured, setMeals, clearConfig } = useDinnerPicker();
-  
+
   const [phase, setPhase] = useState<Phase>(isConfigured ? "spin" : "setup");
   const [result, setResult] = useState<Meal | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  // Get kids for XP credit
+  const kids = useMemo(() => members.filter((m) => m.role === "child"), [members]);
+  const selectedMember = useMemo(
+    () => (selectedMemberId ? kids.find((k) => k.id === selectedMemberId) : null),
+    [kids, selectedMemberId]
+  );
+
+  // XP system integration
+  const { logMicroApp } = useStats(selectedMemberId);
 
   const handleSetupComplete = (meals: Meal[]) => {
     setMeals(meals);
@@ -116,6 +130,30 @@ export function DinnerPicker({ onClose }: DinnerPickerProps) {
 
             <p className="text-4xl">🎉</p>
 
+            {/* XP credit selector */}
+            {kids.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Who picked dinner? (+10 ❤️ XP)</p>
+                <div className="flex justify-center gap-2 flex-wrap">
+                  {kids.map((kid) => (
+                    <button
+                      key={kid.id}
+                      onClick={() => setSelectedMemberId(kid.id)}
+                      className={cn(
+                        "flex items-center gap-1 px-3 py-1.5 rounded-full border-2 text-sm transition-all",
+                        selectedMemberId === kid.id
+                          ? "border-pink-400 bg-pink-50"
+                          : "border-stone-200 hover:border-stone-300"
+                      )}
+                    >
+                      <span>{kid.avatar}</span>
+                      <span className="font-medium">{kid.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               <Button
                 onClick={handleSpinAgain}
@@ -127,14 +165,24 @@ export function DinnerPicker({ onClose }: DinnerPickerProps) {
               </Button>
 
               <Button
-                onClick={onClose}
+                onClick={async () => {
+                  // Log XP if a member is selected
+                  if (selectedMember) {
+                    try {
+                      await logMicroApp("dinner_picker", "heart", `Picked dinner: ${result.name}`);
+                    } catch (err) {
+                      console.error("Failed to log XP:", err);
+                    }
+                  }
+                  onClose();
+                }}
                 className={cn(
                   "w-full h-12 rounded-xl font-bold text-lg",
                   "bg-gradient-to-r from-emerald-500 to-green-600",
                   "hover:from-emerald-600 hover:to-green-700"
                 )}
               >
-                Sounds Good!
+                Sounds Good!{selectedMember ? " (+10 ❤️)" : ""}
               </Button>
             </div>
           </div>
