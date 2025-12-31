@@ -52,13 +52,21 @@ const mockHistory: ActivityLogEntry[] = [
   },
 ];
 
+// Create a mutable mock return value
+let mockUseStatsReturn: {
+  stats: MemberStats | null;
+  history: ActivityLogEntry[];
+  isLoading: boolean;
+  error: string | null;
+} = {
+  stats: mockStats,
+  history: mockHistory,
+  isLoading: false,
+  error: null,
+};
+
 vi.mock("@/hooks/useStats", () => ({
-  useStats: vi.fn(() => ({
-    stats: mockStats,
-    history: mockHistory,
-    isLoading: false,
-    error: null,
-  })),
+  useStats: vi.fn(() => mockUseStatsReturn),
 }));
 
 // Test data
@@ -182,6 +190,13 @@ describe("RecentActivity", () => {
 describe("PersonalDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset to default mock values
+    mockUseStatsReturn = {
+      stats: mockStats,
+      history: mockHistory,
+      isLoading: false,
+      error: null,
+    };
   });
 
   it("renders member info", () => {
@@ -206,5 +221,44 @@ describe("PersonalDashboard", () => {
     expect(screen.queryByText(/total XP/)).not.toBeInTheDocument();
   });
 
-  // Loading state test would require resetting the mock, skipping for simplicity
+  it("shows loading skeleton when isLoading is true", () => {
+    mockUseStatsReturn = {
+      stats: null,
+      history: [],
+      isLoading: true,
+      error: null,
+    };
+
+    render(<PersonalDashboard member={mockKid} />);
+
+    // Should show loading skeleton
+    const loadingElement = document.querySelector(".animate-pulse");
+    expect(loadingElement).toBeInTheDocument();
+  });
+
+  it("shows error message when error occurs", () => {
+    mockUseStatsReturn = {
+      stats: null,
+      history: [],
+      isLoading: false,
+      error: "Failed to fetch",
+    };
+
+    render(<PersonalDashboard member={mockKid} />);
+
+    expect(screen.getByText("Failed to load stats")).toBeInTheDocument();
+  });
+
+  it("shows error message when stats is null", () => {
+    mockUseStatsReturn = {
+      stats: null,
+      history: [],
+      isLoading: false,
+      error: null,
+    };
+
+    render(<PersonalDashboard member={mockKid} />);
+
+    expect(screen.getByText("Failed to load stats")).toBeInTheDocument();
+  });
 });

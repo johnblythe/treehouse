@@ -24,6 +24,8 @@ export function DinnerPicker({ members = [], onClose }: DinnerPickerProps) {
   const [phase, setPhase] = useState<Phase>(isConfigured ? "spin" : "setup");
   const [result, setResult] = useState<Meal | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [xpError, setXpError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get kids for XP credit
   const kids = useMemo(() => members.filter((m) => m.role === "child"), [members]);
@@ -54,6 +56,26 @@ export function DinnerPicker({ members = [], onClose }: DinnerPickerProps) {
     clearConfig();
     setResult(null);
     setPhase("setup");
+  };
+
+  const handleAccept = async () => {
+    if (!selectedMember) {
+      onClose();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setXpError(null);
+
+    try {
+      await logMicroApp("dinner_picker", "heart", `Picked dinner: ${result?.name}`);
+      onClose();
+    } catch (err) {
+      console.error("Failed to log XP:", err);
+      setXpError("Couldn't save XP. Tap to retry.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isHydrated) {
@@ -155,34 +177,32 @@ export function DinnerPicker({ members = [], onClose }: DinnerPickerProps) {
             )}
 
             <div className="space-y-3">
+              {xpError && (
+                <div className="text-center text-sm text-red-600 bg-red-50 rounded-xl p-2">
+                  {xpError}
+                </div>
+              )}
               <Button
                 onClick={handleSpinAgain}
                 variant="outline"
                 className="w-full rounded-xl"
+                disabled={isSubmitting}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Spin Again
               </Button>
 
               <Button
-                onClick={async () => {
-                  // Log XP if a member is selected
-                  if (selectedMember) {
-                    try {
-                      await logMicroApp("dinner_picker", "heart", `Picked dinner: ${result.name}`);
-                    } catch (err) {
-                      console.error("Failed to log XP:", err);
-                    }
-                  }
-                  onClose();
-                }}
+                onClick={selectedMember ? handleAccept : onClose}
+                disabled={isSubmitting}
                 className={cn(
                   "w-full h-12 rounded-xl font-bold text-lg",
-                  "bg-gradient-to-r from-emerald-500 to-green-600",
-                  "hover:from-emerald-600 hover:to-green-700"
+                  xpError
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                    : "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
                 )}
               >
-                Sounds Good!{selectedMember ? " (+10 ❤️)" : ""}
+                {isSubmitting ? "Saving..." : xpError ? "Retry" : `Sounds Good!${selectedMember ? " (+10 ❤️)" : ""}`}
               </Button>
             </div>
           </div>

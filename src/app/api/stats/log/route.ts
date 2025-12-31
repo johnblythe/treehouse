@@ -149,25 +149,35 @@ export async function POST(request: NextRequest) {
         metadata: { triggeredBy: activityType },
       });
 
-      // Update grit stat
-      const [gritStat] = await db
-        .select()
-        .from(stats)
-        .where(and(eq(stats.memberId, memberId), eq(stats.statType, "grit")));
-
-      if (gritStat) {
-        const newXp = gritStat.currentXp + bounceBackXp;
+      // Update grit stat - use updatedStat if we just updated grit to avoid race condition
+      if (statAffected === "grit" && updatedStat) {
+        // Original activity already updated grit, build on that
+        const newXp = updatedStat.currentXp + bounceBackXp;
         await db
           .update(stats)
           .set({ currentXp: newXp, level: getLevelFromXp(newXp), updatedAt: new Date() })
-          .where(eq(stats.id, gritStat.id));
+          .where(eq(stats.id, updatedStat.id));
       } else {
-        await db.insert(stats).values({
-          memberId,
-          statType: "grit",
-          currentXp: bounceBackXp,
-          level: getLevelFromXp(bounceBackXp),
-        });
+        // Grit wasn't affected by original activity, fetch current state
+        const [gritStat] = await db
+          .select()
+          .from(stats)
+          .where(and(eq(stats.memberId, memberId), eq(stats.statType, "grit")));
+
+        if (gritStat) {
+          const newXp = gritStat.currentXp + bounceBackXp;
+          await db
+            .update(stats)
+            .set({ currentXp: newXp, level: getLevelFromXp(newXp), updatedAt: new Date() })
+            .where(eq(stats.id, gritStat.id));
+        } else {
+          await db.insert(stats).values({
+            memberId,
+            statType: "grit",
+            currentXp: bounceBackXp,
+            level: getLevelFromXp(bounceBackXp),
+          });
+        }
       }
     }
 

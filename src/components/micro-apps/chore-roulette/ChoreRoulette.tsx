@@ -32,6 +32,8 @@ export function ChoreRoulette({ members, onPointsAwarded, onClose }: ChoreRoulet
   const [realChores, setRealChores] = useState<ChoreInput[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [slots, setSlots] = useState<RouletteSlot[]>([]);
+  const [xpError, setXpError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // XP system integration
   const { logMicroApp } = useStats(selectedMemberId);
@@ -97,24 +99,33 @@ export function ChoreRoulette({ members, onPointsAwarded, onClose }: ChoreRoulet
   }, []);
 
   const handleAcceptChores = async () => {
-    if (selectedMember) {
-      // Award points for each real chore (legacy system)
-      realChores.forEach(chore => {
-        onPointsAwarded(selectedMember.id, chore.points, chore.name);
-      });
-
-      // Log to XP system → +20 Grit
-      try {
-        await logMicroApp(
-          "chore_spinner",
-          "grit",
-          `Completed ${realChores.length} chore${realChores.length > 1 ? "s" : ""}`
-        );
-      } catch (err) {
-        console.error("Failed to log XP:", err);
-      }
+    if (!selectedMember) {
+      onClose();
+      return;
     }
-    onClose();
+
+    setIsSubmitting(true);
+    setXpError(null);
+
+    // Award points for each real chore (legacy system)
+    realChores.forEach(chore => {
+      onPointsAwarded(selectedMember.id, chore.points, chore.name);
+    });
+
+    // Log to XP system → +20 Grit
+    try {
+      await logMicroApp(
+        "chore_spinner",
+        "grit",
+        `Completed ${realChores.length} chore${realChores.length > 1 ? "s" : ""}`
+      );
+      onClose();
+    } catch (err) {
+      console.error("Failed to log XP:", err);
+      setXpError("Couldn't save XP. Tap to retry.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleNewRound = () => {
@@ -253,21 +264,29 @@ export function ChoreRoulette({ members, onPointsAwarded, onClose }: ChoreRoulet
 
             {/* Actions */}
             <div className="space-y-3">
+              {xpError && (
+                <div className="text-center text-sm text-red-600 bg-red-50 rounded-xl p-2">
+                  {xpError}
+                </div>
+              )}
               <Button
                 onClick={handleAcceptChores}
+                disabled={isSubmitting}
                 className={cn(
                   "w-full h-12 rounded-xl font-bold text-lg shadow-lg",
-                  "bg-gradient-to-r from-emerald-500 to-green-600",
-                  "hover:from-emerald-600 hover:to-green-700"
+                  xpError
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                    : "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
                 )}
               >
-                Accept Chores → +{totalPoints} pts
+                {isSubmitting ? "Saving..." : xpError ? "Retry" : `Accept Chores → +${totalPoints} pts`}
               </Button>
 
               <Button
                 onClick={handleNewRound}
                 variant="outline"
                 className="w-full rounded-xl"
+                disabled={isSubmitting}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 New Round (Same Chores)

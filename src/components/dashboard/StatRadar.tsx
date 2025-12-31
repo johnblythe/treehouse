@@ -1,6 +1,6 @@
 "use client";
 
-import { STAT_TYPES, STAT_INFO, StatType, getLevelFromXp } from "@/lib/stats";
+import { STAT_TYPES, STAT_INFO, StatType } from "@/lib/stats";
 import type { StatData } from "@/hooks/useStats";
 
 interface StatRadarProps {
