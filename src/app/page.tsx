@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useFamily } from "@/hooks/useFamily";
 import { useActivities } from "@/hooks/useActivities";
 import { MemberList } from "@/components/family";
 import { ActivityFeed, PointsToast, usePointsToast } from "@/components/points";
-import { Leaderboard, LeaderboardReveal } from "@/components/leaderboard";
+import { LeaderboardReveal } from "@/components/leaderboard";
+import { PersonalDashboard } from "@/components/dashboard";
 import { ChoreRoulette } from "@/components/micro-apps/chore-roulette";
 import { DinnerPicker } from "@/components/micro-apps/dinner-picker";
 import { DailyCheckIn } from "@/components/micro-apps/check-in";
@@ -25,6 +26,14 @@ export default function Home() {
   const [showDinnerPicker, setShowDinnerPicker] = useState(false);
   const [showDailyCheckIn, setShowDailyCheckIn] = useState(false);
   const [showSelfReport, setShowSelfReport] = useState(false);
+  const [dashboardMemberId, setDashboardMemberId] = useState<string | null>(null);
+
+  // Get kids for dashboard
+  const kids = useMemo(() => members.filter((m) => m.role === "child"), [members]);
+  const dashboardMember = useMemo(() => {
+    if (dashboardMemberId) return kids.find((k) => k.id === dashboardMemberId) ?? kids[0];
+    return kids[0] ?? null;
+  }, [kids, dashboardMemberId]);
 
   const handlePointsAwarded = (memberId: string, points: number, activityName: string) => {
     awardPoints(memberId, points);
@@ -80,7 +89,7 @@ export default function Home() {
 
       {/* Dinner Picker Modal */}
       {showDinnerPicker && (
-        <DinnerPicker onClose={() => setShowDinnerPicker(false)} />
+        <DinnerPicker members={members} onClose={() => setShowDinnerPicker(false)} />
       )}
 
       {/* Daily Check-in Modal */}
@@ -150,14 +159,31 @@ export default function Home() {
               onRemove={removeMember}
             />
 
-            {/* Mobile: collapsible leaderboard + activity feed */}
-            {members.length > 0 && (
+            {/* Mobile: Personal Dashboard + activity feed */}
+            {dashboardMember && (
               <div className="lg:hidden space-y-4">
-                {members.some(m => m.points > 0) && (
-                  <div className="bg-white/60 backdrop-blur-sm border-2 border-stone-200 rounded-2xl p-4">
-                    <Leaderboard members={members} compact />
+                {/* Member switcher for multi-kid families */}
+                {kids.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {kids.map((kid) => (
+                      <button
+                        key={kid.id}
+                        onClick={() => setDashboardMemberId(kid.id)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-full border-2 whitespace-nowrap transition-all ${
+                          dashboardMember.id === kid.id
+                            ? "border-purple-400 bg-purple-50"
+                            : "border-stone-200 bg-white/60 hover:border-stone-300"
+                        }`}
+                      >
+                        <span className="text-xl">{kid.avatar}</span>
+                        <span className="font-medium text-sm">{kid.name}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
+                <div className="bg-white/60 backdrop-blur-sm border-2 border-stone-200 rounded-2xl p-4">
+                  <PersonalDashboard member={dashboardMember} compact />
+                </div>
                 {activities.length > 0 && (
                   <ActivityFeed
                     activities={activities}
@@ -237,18 +263,35 @@ export default function Home() {
             )}
           </main>
 
-          {/* Desktop: sidebar with leaderboard + activity feed */}
-          {members.length > 0 && (
+          {/* Desktop: sidebar with Personal Dashboard + activity feed */}
+          {dashboardMember && (
             <aside className="hidden lg:block w-80 shrink-0 space-y-4">
-              {/* Leaderboard */}
-              {members.some(m => m.points > 0) && (
-                <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 shadow-sm">
-                  <Leaderboard members={members} />
-                </div>
-              )}
-              
+              {/* Personal Dashboard */}
+              <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 shadow-sm">
+                {/* Member switcher for multi-kid families */}
+                {kids.length > 1 && (
+                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    {kids.map((kid) => (
+                      <button
+                        key={kid.id}
+                        onClick={() => setDashboardMemberId(kid.id)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full border text-sm whitespace-nowrap transition-all ${
+                          dashboardMember.id === kid.id
+                            ? "border-purple-400 bg-purple-50"
+                            : "border-stone-200 hover:border-stone-300"
+                        }`}
+                      >
+                        <span>{kid.avatar}</span>
+                        <span className="font-medium">{kid.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <PersonalDashboard member={dashboardMember} compact />
+              </div>
+
               {/* Activity Feed */}
-              <div className="sticky top-24 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 max-h-[calc(100vh-20rem)] overflow-hidden shadow-sm" style={{ top: members.some(m => m.points > 0) ? 'auto' : '6rem' }}>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-stone-200 p-5 max-h-[calc(100vh-20rem)] overflow-hidden shadow-sm">
                 <ActivityFeed
                   activities={activities}
                   members={members}

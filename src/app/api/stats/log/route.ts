@@ -131,8 +131,55 @@ export async function POST(request: NextRequest) {
         .returning();
     }
 
-    // Update streak
-    await updateStreak(memberId, activityType === "bounce_back");
+    // Update streak and check for comebacks
+    const isComeback = await updateStreak(memberId, activityType === "bounce_back");
+
+    // If this activity triggered a comeback (and isn't already a bounce_back activity),
+    // log a bonus bounce_back activity to grant the comeback XP
+    if (isComeback && activityType !== "bounce_back") {
+      const bounceBackXp = XP_VALUES.bounce_back.base;
+
+      // Log bounce_back activity
+      await db.insert(activityLog).values({
+        memberId,
+        activityType: "bounce_back",
+        statAffected: "grit",
+        xpGained: bounceBackXp,
+        description: "Bounced back after a break!",
+        metadata: { triggeredBy: activityType },
+      });
+
+      // Update grit stat - use updatedStat if we just updated grit to avoid race condition
+      if (statAffected === "grit" && updatedStat) {
+        // Original activity already updated grit, build on that
+        const newXp = updatedStat.currentXp + bounceBackXp;
+        await db
+          .update(stats)
+          .set({ currentXp: newXp, level: getLevelFromXp(newXp), updatedAt: new Date() })
+          .where(eq(stats.id, updatedStat.id));
+      } else {
+        // Grit wasn't affected by original activity, fetch current state
+        const [gritStat] = await db
+          .select()
+          .from(stats)
+          .where(and(eq(stats.memberId, memberId), eq(stats.statType, "grit")));
+
+        if (gritStat) {
+          const newXp = gritStat.currentXp + bounceBackXp;
+          await db
+            .update(stats)
+            .set({ currentXp: newXp, level: getLevelFromXp(newXp), updatedAt: new Date() })
+            .where(eq(stats.id, gritStat.id));
+        } else {
+          await db.insert(stats).values({
+            memberId,
+            statType: "grit",
+            currentXp: bounceBackXp,
+            level: getLevelFromXp(bounceBackXp),
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       activity,
@@ -147,7 +194,8 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper: Update streak tracking
-async function updateStreak(memberId: string, isBounceBack: boolean) {
+// Returns true if this activity is a comeback (streak was broken)
+async function updateStreak(memberId: string, isBounceBack: boolean): Promise<boolean> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -157,7 +205,7 @@ async function updateStreak(memberId: string, isBounceBack: boolean) {
     .where(eq(streaks.memberId, memberId));
 
   if (!memberStreak) {
-    // Initialize streak
+    // Initialize streak - first activity is never a comeback
     await db.insert(streaks).values({
       memberId,
       currentStreak: 1,
@@ -166,7 +214,7 @@ async function updateStreak(memberId: string, isBounceBack: boolean) {
       lastActiveDate: today,
       weekStartDate: getWeekStart(today),
     });
-    return;
+    return false;
   }
 
   const lastActive = memberStreak.lastActiveDate
@@ -177,9 +225,9 @@ async function updateStreak(memberId: string, isBounceBack: boolean) {
     lastActive.setHours(0, 0, 0, 0);
   }
 
-  // Already active today
+  // Already active today - not a new comeback
   if (lastActive && lastActive.getTime() === today.getTime()) {
-    return;
+    return false;
   }
 
   // Calculate days since last activity
@@ -190,18 +238,19 @@ async function updateStreak(memberId: string, isBounceBack: boolean) {
   let newCurrentStreak = memberStreak.currentStreak;
   let newBestStreak = memberStreak.bestStreak;
   let newComebackCount = memberStreak.comebackCount;
+  let isComeback = false;
 
   if (daysSinceActive === 1) {
     // Consecutive day
     newCurrentStreak++;
   } else if (daysSinceActive <= 3) {
     // Within rest day allowance (up to 2 rest days)
-    // Could check restDaysUsedThisWeek for more sophisticated logic
     newCurrentStreak++;
   } else {
     // Streak broken, this is a comeback
     newCurrentStreak = 1;
     newComebackCount++;
+    isComeback = true;
   }
 
   if (newCurrentStreak > newBestStreak) {
@@ -229,6 +278,8 @@ async function updateStreak(memberId: string, isBounceBack: boolean) {
       updatedAt: new Date(),
     })
     .where(eq(streaks.id, memberStreak.id));
+
+  return isComeback;
 }
 
 // Helper: Get start of current week (Sunday)
